@@ -8,6 +8,8 @@ import fr.insee.rmes.modules.users.domain.model.AllModuleAccessPrivileges;
 import fr.insee.rmes.modules.users.domain.model.ModuleAccessPrivileges;
 import fr.insee.rmes.modules.users.domain.model.RBAC;
 import fr.insee.rmes.modules.users.domain.port.serverside.RbacFetcher;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -16,6 +18,8 @@ import java.util.stream.Collectors;
 @ServerSideAdaptor
 @Service
 public class PropertiesRbacFetcher implements RbacFetcher {
+
+    private static final Logger log = LoggerFactory.getLogger(PropertiesRbacFetcher.class);
 
     private final Set<AllModuleAccessPrivileges> allModulesAccessPrivileges;
 
@@ -56,7 +60,7 @@ public class PropertiesRbacFetcher implements RbacFetcher {
                         .orElseThrow(() -> new UnknownPrivilegeException(privilege, r, application))
                         .strategy();
             } catch (UnknownApplicationException | UnknownRoleException exception){
-
+                log.debug("No privilege found for role, defaulting to NONE strategy: {}", exception.getMessage());
                 return RBAC.Strategy.NONE;
             }
 
@@ -87,7 +91,9 @@ public class PropertiesRbacFetcher implements RbacFetcher {
                                 );
                     }
                 }
-            } catch (UnknownRoleException exception){}
+            } catch (UnknownRoleException exception){
+                log.warn("Skipping unknown role while computing privileges: {}", exception.getMessage());
+            }
 
         }
 
